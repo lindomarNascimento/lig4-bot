@@ -1,29 +1,4 @@
 const LindoScript = (scenery, myMove) => {
-  function showScenery(scenery) {
-    // Transpõe o cenário e substitui undefined por um espaço vazio
-    const transposedScenery = scenery[0].map((_, colIndex) => {
-      return scenery.map((row) => {
-        return (row[colIndex] === undefined && " ") || row[colIndex];
-      });
-    });
-
-    // Exibe a matriz de uma maneira bonitinha
-    console.table(transposedScenery);
-  }
-
-  showScenery(scenery);
-  var teste = [
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, 0, 0, 0, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-    [1, undefined, undefined, undefined, undefined, 0],
-  ];
-
-  console.log(scenery);
   let points = {
     0: 10,
     1: -10,
@@ -85,6 +60,28 @@ const LindoScript = (scenery, myMove) => {
       }
     }
 
+    for (let i = 0; i < 4; i++) {
+      //i = 0
+      for (let j = 0; j < 4; j++) {
+        // j = 1
+
+        var test = j + i;
+
+        if (test != 4) continue;
+
+        if (
+          equals(
+            scenery[i][j], // 01
+            scenery[i + 1][j + 1], // 12
+            scenery[i + 2][j + 2], // 23
+            scenery[i + 3][j + 3] // 34
+          )
+        ) {
+          winner = +scenery[i][j];
+        }
+      }
+    }
+
     let openSpots = 0;
     for (let i = 0; i < 6; i++) {
       for (let j = 0; j < 8; j++) {
@@ -94,7 +91,6 @@ const LindoScript = (scenery, myMove) => {
       }
     }
 
-    // console.log({ winner });
     if (winner == null && openSpots == 0) {
       return "tie";
     } else {
@@ -102,80 +98,78 @@ const LindoScript = (scenery, myMove) => {
     }
   }
 
+  function newBoard(scenery) {
+    const newScenary = new Array();
+
+    for (var i = 0; i < scenery.length; i++) {
+      newScenary.push(scenery[i].slice());
+    }
+    return newScenary;
+  }
+
   function minimax(scenery, depth, bool) {
     let result = checkWinner();
     if (result !== null) {
+      console.log(scenery);
+      console.log(points[result]);
       return points[result];
     }
 
-    if (bool) {
-      //maquina
-      let bestTest = -Infinity;
+    if (depth > 7) return points.tie;
+
+    let bestTest;
+
+    bool ? (bestTest = -Infinity) : (bestTest = Infinity);
+
+    for (let c = 0; c < 6; c++) {
       let startPosition = 0;
-
-      for (let l = 0; l < 1; l++) {
-        for (let c = 0; c < 8; c++) {
-          while (
-            typeof scenery[c][startPosition] != "undefined" &&
-            startPosition < 5
-          ) {
-            startPosition++;
-          }
-          scenery[c][startPosition] = 1;
-
-          let best = minimax(scenery, parseInt(depth + 1), false);
-          scenery[c][startPosition] = undefined;
-          bestTest = Math.max(best, bestTest);
-        }
+      while (
+        typeof scenery[startPosition][c] != "undefined" &&
+        startPosition < 7
+      ) {
+        startPosition++;
       }
 
-      return bestTest;
-    } else {
-      //humano
-      let bestTest = Infinity;
-      let startPosition = 0;
-      for (let l = 0; l < 1; l++) {
-        for (let c = 0; c < 8; c++) {
-          console.log(scenery[c][startPosition])
-          while (
-            typeof scenery[c][startPosition] != "undefined" &&
-            startPosition < 5
-          ) {
-            startPosition++;
-          }
-          scenery[c][startPosition] = 0;
-
-          let best = minimax(scenery, parseInt(depth + 1), true);
-          scenery[c][startPosition]= undefined;
-          bestTest = Math.min(best, bestTest);
-        }
+      if (startPosition === 7) {
+        continue;
       }
-      return bestTest;
+      scenery[startPosition][c] = bool ? myMove : !myMove;
+
+      let best = minimax(scenery, parseInt(depth + 1), !bool);
+
+      scenery[startPosition][c] = undefined;
+
+      bool
+        ? (bestTest = Math.max(best, bestTest))
+        : (bestTest = Math.min(best, bestTest));
     }
+
+    return bestTest;
   }
 
   let bestMove = -Infinity;
   let move;
-  for (let l = 0; l < 6; l++) {
-    for (let c = 0; c < 8; c++) {
-      if (typeof scenery[l][c] === "undefined") {
-        scenery[l][c] = myMove;
+  let startPosition = 0;
+  let board = newBoard(scenery);
 
-        let best = minimax(scenery, +0, false);
-        scenery[l][c] = undefined;
-        console.log({ best });
-        console.log({ bestMove });
-        if (best > bestMove) {
-          bestMove = best;
-          console.log("if", l, c);
-          move = l;
-        }
-      }
+  for (let c = 0; c < 8; c++) {
+    while (typeof board[startPosition][c] != "undefined" && startPosition < 7) {
+      startPosition++;
+    }
+    if (startPosition === 7) {
+      continue;
+    }
+    board[startPosition][c] = myMove;
+
+    let best = minimax(board, +0, false);
+    board[startPosition][c] = undefined;
+    if (best > bestMove) {
+      bestMove = best;
+      move = startPosition;
     }
   }
-  console.log("move :>> ", move);
 
-  return Math.floor(Math.random() * 8);
+  return move;
 };
 
 export default LindoScript;
